@@ -127,6 +127,7 @@ namespace Outstanding_Console
 
             string EmpName = "SELECT DISTINCT Owner FROM OverDue ORDER BY Owner ASC";
             string emailID = "";
+            string msgbody = "";
             List<string> EmpNameList = new List<string>();
             SqlCommand DateCheck2 = new SqlCommand(EmpName, _connection);
             using (SqlDataReader oReader = DateCheck2.ExecuteReader())
@@ -138,37 +139,38 @@ namespace Outstanding_Console
                 oReader.Close();
             }
 
-            string messageBody = "";
-            messageBody = "<font>The following are the Outstanding Invoices: </font><br><br>";
-            string htmlTableStart = "<table style=\"border-collapse:collapse; text-align:center;\" >";
-            string htmlTableEnd = "</table>";
-            string htmlHeaderRowStart = "<tr style =\"background-color:#6FA1D2; color:#ffffff;\">";
-            string htmlHeaderRowEnd = "</tr>";
-            string htmlTrStart = "<tr style =\"color:#555555;\">";
-            string htmlTrEnd = "</tr>";
-            string htmlTdStart = "<th style=\" border-color:#5c87b2; border-style:solid; border-width:thin; padding: 5px;\">";
-            string htmlTdEnd = "</th>";
             
-            messageBody += htmlTableStart;
-            messageBody += htmlHeaderRowStart;
-            messageBody += htmlTdStart + "Date " + htmlTdEnd;
-            messageBody += htmlTdStart + "Ref. No. " + htmlTdEnd;
-            messageBody += htmlTdStart + "Client Name " + htmlTdEnd;
-            messageBody += htmlTdStart + "Pending Amt " + htmlTdEnd;
-            messageBody += htmlTdStart + "Comments " + htmlTdEnd;
-            messageBody += htmlTdStart + "Status " + htmlTdEnd;
-            messageBody += htmlTdStart + "Due Date " + htmlTdEnd;
-           
-            messageBody += htmlHeaderRowEnd;
 
             foreach (string Emp_Name in EmpNameList)
             {
-                
                 //string query3 = "SELECT Date,RefNo,ClientName,PendingAmt,Comments,Status,DueDate FROM OverDue where Owner = '" + Emp_Name + "'";
                 string query3 = "SELECT OverDue.Date, OverDue.RefNo, OverDue.ClientName, OverDue.PendingAmt, OverDue.Comments, OverDue.Status, OverDue.DueDate, Email.Email FROM Email INNER JOIN OverDue ON Email.Name = OverDue.Owner where OverDue.Owner = '" + Emp_Name + "'";
                 SqlCommand DateCheck3 = new SqlCommand(query3, _connection);
                 using (SqlDataReader oReader2 = DateCheck3.ExecuteReader())
                 {
+                    string messageBody = "";
+                    messageBody = "<font>The following are the Outstanding Invoices: </font><br><br>";
+                    string htmlTableStart = "<table style=\"border-collapse:collapse; text-align:center;\" >";
+                    string htmlTableEnd = "</table>";
+                    string htmlHeaderRowStart = "<tr style =\"background-color:#6FA1D2; color:#ffffff;\">";
+                    string htmlHeaderRowEnd = "</tr>";
+                    string htmlTrStart = "<tr style =\"color:#555555;\">";
+                    string htmlTrEnd = "</tr>";
+                    string htmlTdStart = "<th style=\" border-color:#5c87b2; border-style:solid; border-width:thin; padding: 5px;\">";
+                    string htmlTdEnd = "</th>";
+
+                    messageBody += htmlTableStart;
+                    messageBody += htmlHeaderRowStart;
+                    messageBody += htmlTdStart + "Date " + htmlTdEnd;
+                    messageBody += htmlTdStart + "Ref. No. " + htmlTdEnd;
+                    messageBody += htmlTdStart + "Client Name " + htmlTdEnd;
+                    messageBody += htmlTdStart + "Pending Amt " + htmlTdEnd;
+                    messageBody += htmlTdStart + "Comments " + htmlTdEnd;
+                    messageBody += htmlTdStart + "Status " + htmlTdEnd;
+                    messageBody += htmlTdStart + "Due Date " + htmlTdEnd;
+
+                    messageBody += htmlHeaderRowEnd;
+
                     while (oReader2.Read())
                     {
                         messageBody = messageBody + htmlTrStart;
@@ -183,7 +185,7 @@ namespace Outstanding_Console
                         messageBody = messageBody + htmlTrEnd;
                     }
                     messageBody = messageBody + htmlTableEnd;
-                    
+                    msgbody = messageBody;
                 }
                 string HostAdd = "smtp.gmail.com";
                 string FromEmailid = "notifications@envirosafetysolutions.in";
@@ -197,7 +199,7 @@ namespace Outstanding_Console
                 mail.CC.Add("vipin@envirosafetysolutions.in");
                 //mail.CC.Add("prasanna@envirosafetysolutions.in");
                 mail.Subject = "Outstanding Report of " + Emp_Name;
-                mail.Body = messageBody;
+                mail.Body = msgbody;
                 mail.IsBodyHtml = true;
 
                 SmtpClient cnt = new SmtpClient();
