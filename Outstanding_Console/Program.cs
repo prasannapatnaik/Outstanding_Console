@@ -30,9 +30,9 @@ namespace Outstanding_Console
         {
            
             UserCredential credential;
+            string path = AppDomain.CurrentDomain.BaseDirectory;
 
-            using (var stream =
-                new FileStream("credentials.json", FileMode.Open, FileAccess.Read))
+            using (var stream = new FileStream(path+"\\"+"credentials.json", FileMode.Open, FileAccess.Read))
             {
                 // The file token.json stores the user's access and refresh tokens, and is created
                 // automatically when the authorization flow completes for the first time.
@@ -194,6 +194,7 @@ namespace Outstanding_Console
 
                 MailMessage mail = new MailMessage();
                 mail.To.Add(emailID);
+                //mail.To.Add("prasannapatnaikrcert@gmail.com");
                 mail.From = new MailAddress(FromEmailid);
                 mail.CC.Add("anup@envirosafetysolutions.in");
                 mail.CC.Add("vipin@envirosafetysolutions.in");
@@ -211,8 +212,9 @@ namespace Outstanding_Console
                 cnt.Send(mail);
 
             }
-            
-            Console.Read();
+
+            //Console.Read();
+            Environment.Exit(0);
         }
     }
 }
