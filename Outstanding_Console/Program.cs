@@ -84,7 +84,7 @@ namespace Outstanding_Console
                 {
                     // Print columns A and E, which correspond to indices 0 and 4.
                     Console.WriteLine("{0}, {1}, {2}, {3} , {4}, {5}, {6}, {7}", row[1], row[2], row[3], row[4], row[5], row[7], row[8], row[10]);
-                    if (row[7].ToString() == "Overdue")
+                    if (row[7].ToString() == "Overdue" || row[7].ToString() == "Due Soon")
                     {
                         workRow = workTable.NewRow();
                         workRow[0] = row[1];
