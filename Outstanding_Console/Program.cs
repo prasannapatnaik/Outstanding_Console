@@ -232,6 +232,7 @@ namespace Outstanding_Console
                 Console.WriteLine("No rows found.");
             }
             reader.Close();
+            _connection.Close();
             Environment.Exit(0);
             // Define request parameters.
             //String spreadsheetId = "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms";
