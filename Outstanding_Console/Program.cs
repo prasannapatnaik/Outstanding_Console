@@ -217,6 +217,7 @@ namespace Outstanding_Console
                             cnt.Credentials = new NetworkCredential(FromEmailid, password);
                             cnt.EnableSsl = true;
                             cnt.Send(mail);
+                            cnt.Dispose();
                         }
                         catch (Exception ex)
                         {
