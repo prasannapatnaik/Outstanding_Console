@@ -224,8 +224,11 @@ namespace Outstanding_Console
                             cnt.Port = Convert.ToInt32(port);
                             cnt.Credentials = new NetworkCredential(FromEmailid, password);
                             cnt.EnableSsl = true;
+
                             //cnt.Send(mail);
                             //cnt.Dispose();
+                            mail.CC.Clear();
+                            mail.To.Clear();
                         }
                         catch (Exception ex)
                         {
@@ -233,7 +236,7 @@ namespace Outstanding_Console
                             Console.ReadKey();
                         }
                     }
-                    Console.ReadKey();
+                    //Console.ReadKey();
                 }
             }
             else
