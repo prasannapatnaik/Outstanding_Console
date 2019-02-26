@@ -201,11 +201,17 @@ namespace Outstanding_Console
                         mail.To.Add(emailID);
                         //mail.To.Add("prasannapatnaikrcert@gmail.com");
                         mail.From = new MailAddress(FromEmailid);
-                        mail.CC.Add("anup@envirosafetysolutions.in");
-                        mail.CC.Add("vipin@envirosafetysolutions.in");
-                        mail.CC.Add("atul@envirosafetysolutions.in");
-                        mail.CC.Add("sagar@envirosafetysolutions.in");
-                        //mail.CC.Add("prasanna@envirosafetysolutions.in");
+
+                        
+                        string query4 = "SELECT Email FROM CCList where Comp  = '" + spreadsheetId + "'";
+                        SqlCommand DateCheck4 = new SqlCommand(query4, _connection);
+                        SqlDataReader reader4 = DateCheck4.ExecuteReader();
+                        if (reader4.HasRows)
+                        {
+                            while (reader4.Read())
+                            { mail.CC.Add(reader4.GetString(0)); }
+                        }
+
                         mail.Subject = "Outstanding Report of " + Emp_Name;
                         mail.Body = msgbody;
                         mail.IsBodyHtml = true;
@@ -218,8 +224,8 @@ namespace Outstanding_Console
                             cnt.Port = Convert.ToInt32(port);
                             cnt.Credentials = new NetworkCredential(FromEmailid, password);
                             cnt.EnableSsl = true;
-                            cnt.Send(mail);
-                            cnt.Dispose();
+                            //cnt.Send(mail);
+                            //cnt.Dispose();
                         }
                         catch (Exception ex)
                         {
@@ -227,7 +233,7 @@ namespace Outstanding_Console
                             Console.ReadKey();
                         }
                     }
-                    //Console.ReadKey();
+                    Console.ReadKey();
                 }
             }
             else
