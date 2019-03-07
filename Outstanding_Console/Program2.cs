@@ -24,6 +24,7 @@ namespace Outstanding_Console
         DataTable dt = new DataTable("MyTable1");
         SqlDataReader oReader2;
         
+        
         public static object ConfigurationSettings { get; private set; }
 
         static void Main(string[] args)
@@ -53,6 +54,8 @@ namespace Outstanding_Console
                 ApplicationName = ApplicationName,
             });
 
+            Int32 sheetno = 0;
+            string emp = "";
             var _connection = new SqlConnection();
             _connection.ConnectionString = "Data Source=192.168.1.225;Initial Catalog=Outstanding;Persist Security Info=True;MultipleActiveResultSets=true;User ID=sa;Password=Enviro1@!@#$";
             string query1 = "SELECT Sheet_Name FROM Sheets";
@@ -63,180 +66,196 @@ namespace Outstanding_Console
             {
                 while (reader.Read())
                 {
-                    string spreadsheetId = reader.GetString(0);
-                    String range = "Report!A2:AE";
-                    SpreadsheetsResource.ValuesResource.GetRequest request =
-                            service.Spreadsheets.Values.Get(spreadsheetId, range);
-
-                    // Prints the names and majors of students in a sample spreadsheet:
-                    // https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
-                    ValueRange response = request.Execute();
-                    IList<IList<Object>> values = response.Values;
-                    DataTable workTable = new DataTable("Outstanding");
-                    DataRow workRow;
-                    workTable.Columns.Add(new DataColumn("Date"));
-                    workTable.Columns.Add(new DataColumn("RefNo"));
-                    workTable.Columns.Add(new DataColumn("ClientName"));
-                    workTable.Columns.Add(new DataColumn("PendingAmt"));
-                    workTable.Columns.Add(new DataColumn("Comments"));
-                    workTable.Columns.Add(new DataColumn("Status"));
-                    workTable.Columns.Add(new DataColumn("DueDate"));
-                    workTable.Columns.Add(new DataColumn("Owner"));
-
-                    if (values != null && values.Count > 0)
+                    try
                     {
-                        //Console.WriteLine("Name, Major");
-                        foreach (var row in values)
+                        string spreadsheetId = reader.GetString(0);
+                        sheetno = sheetno + 1;
+                        //string spreadsheetId = "1aFhePG8XjlcTK0d2ixasloqYGMY0EW0f0EvoH7u-clg";
+                        String range = "Report!A2:AE";
+                        SpreadsheetsResource.ValuesResource.GetRequest request =
+                                service.Spreadsheets.Values.Get(spreadsheetId, range);
+
+                        // Prints the names and majors of students in a sample spreadsheet:
+                        // https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
+                        ValueRange response = request.Execute();
+                        IList<IList<Object>> values = response.Values;
+                        DataTable workTable = new DataTable("Outstanding");
+                        DataRow workRow;
+                        workTable.Columns.Add(new DataColumn("Date"));
+                        workTable.Columns.Add(new DataColumn("RefNo"));
+                        workTable.Columns.Add(new DataColumn("ClientName"));
+                        workTable.Columns.Add(new DataColumn("PendingAmt"));
+                        workTable.Columns.Add(new DataColumn("Comments"));
+                        workTable.Columns.Add(new DataColumn("Status"));
+                        workTable.Columns.Add(new DataColumn("DueDate"));
+                        workTable.Columns.Add(new DataColumn("Owner"));
+
+                        if (values != null && values.Count > 0)
                         {
-                            // Print columns A and E, which correspond to indices 0 and 4.
-                            Console.WriteLine("{0}, {1}, {2}, {3} , {4}, {5}, {6}, {7}", row[1], row[2], row[3], row[4], row[5], row[7], row[8], row[10]);
-                            string chk = row[7].ToString().Trim();
-                            //if (row[7].ToString() == "Overdue" || row[7].ToString() == "Due Soon")
-                            if (chk == "Overdue" || chk == "Due Soon")
+                            //Console.WriteLine("Name, Major");
+                            foreach (var row in values)
                             {
-                                workRow = workTable.NewRow();
-                                workRow[0] = row[1];
-                                workRow[1] = row[2];
-                                workRow[2] = row[3];
-                                workRow[3] = row[4];
-                                workRow[4] = row[5];
-                                workRow[5] = row[7];
-                                workRow[6] = row[8];
-                                workRow[7] = row[10];
-                                workTable.Rows.Add(workRow);
+                                // Print columns A and E, which correspond to indices 0 and 4.
+                                Console.WriteLine("{0}, {1}, {2}, {3} , {4}, {5}, {6}, {7}", row[1], row[2], row[3], row[4], row[5], row[7], row[8], row[10]);
+                                string chk = row[7].ToString().Trim();
+                                //if (row[7].ToString() == "Overdue" || row[7].ToString() == "Due Soon")
+                                if (chk == "Overdue" || chk == "Due Soon")
+                                {
+                                    workRow = workTable.NewRow();
+                                    workRow[0] = row[1];
+                                    workRow[1] = row[2];
+                                    workRow[2] = row[3];
+                                    workRow[3] = row[4];
+                                    workRow[4] = row[5];
+                                    workRow[5] = row[7];
+                                    workRow[6] = row[8];
+                                    workRow[7] = row[10];
+                                    workTable.Rows.Add(workRow);
+                                }
+
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("No data found.");
+                        }
+
+                        //_connection.ConnectionString = "Data Source=192.168.1.225;Initial Catalog=Outstanding;Persist Security Info=True;User ID=sa;Password=Enviro1@!@#$";
+                        string query = "DELETE FROM OverDue";
+                        //_connection.Open();
+                        SqlCommand DateCheck = new SqlCommand(query, _connection);
+                        DateCheck.ExecuteNonQuery();
+
+                        using (var bulkCopy = new SqlBulkCopy(_connection.ConnectionString, SqlBulkCopyOptions.KeepIdentity))
+                        {
+                            // my DataTable column names match my SQL Column names, so I simply made this loop. However if your column names don't match, just pass in which datatable name matches the SQL column name in Column Mappings
+                            foreach (DataColumn col in workTable.Columns)
+                            {
+                                bulkCopy.ColumnMappings.Add(col.ColumnName, col.ColumnName);
                             }
 
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("No data found.");
-                    }
-
-                    //_connection.ConnectionString = "Data Source=192.168.1.225;Initial Catalog=Outstanding;Persist Security Info=True;User ID=sa;Password=Enviro1@!@#$";
-                    string query = "DELETE FROM OverDue";
-                    //_connection.Open();
-                    SqlCommand DateCheck = new SqlCommand(query, _connection);
-                    DateCheck.ExecuteNonQuery();
-
-                    using (var bulkCopy = new SqlBulkCopy(_connection.ConnectionString, SqlBulkCopyOptions.KeepIdentity))
-                    {
-                        // my DataTable column names match my SQL Column names, so I simply made this loop. However if your column names don't match, just pass in which datatable name matches the SQL column name in Column Mappings
-                        foreach (DataColumn col in workTable.Columns)
-                        {
-                            bulkCopy.ColumnMappings.Add(col.ColumnName, col.ColumnName);
+                            bulkCopy.BulkCopyTimeout = 600;
+                            bulkCopy.DestinationTableName = "OverDue";
+                            bulkCopy.WriteToServer(workTable);
                         }
 
-                        bulkCopy.BulkCopyTimeout = 600;
-                        bulkCopy.DestinationTableName = "OverDue";
-                        bulkCopy.WriteToServer(workTable);
-                    }
-
-                    string EmpName = "SELECT DISTINCT Owner FROM OverDue ORDER BY Owner ASC";
-                    string emailID = "";
-                    string msgbody = "";
-                    List<string> EmpNameList = new List<string>();
-                    SqlCommand DateCheck2 = new SqlCommand(EmpName, _connection);
-                    using (SqlDataReader oReader = DateCheck2.ExecuteReader())
-                    {
-                        while (oReader.Read())
+                        string EmpName = "SELECT DISTINCT Owner FROM OverDue ORDER BY Owner ASC";
+                        string emailID = "";
+                        string msgbody = "";
+                        List<string> EmpNameList = new List<string>();
+                        SqlCommand DateCheck2 = new SqlCommand(EmpName, _connection);
+                        using (SqlDataReader oReader = DateCheck2.ExecuteReader())
                         {
-                            EmpNameList.Add(oReader[0].ToString());
-                        }
-                        oReader.Close();
-                    }
-
-                    foreach (string Emp_Name in EmpNameList)
-                    {
-                        //string query3 = "SELECT Date,RefNo,ClientName,PendingAmt,Comments,Status,DueDate FROM OverDue where Owner = '" + Emp_Name + "'";
-                        string query3 = "SELECT OverDue.Date, OverDue.RefNo, OverDue.ClientName, OverDue.PendingAmt, OverDue.Comments, OverDue.Status, OverDue.DueDate, Email.Email FROM Email INNER JOIN OverDue ON Email.Name = OverDue.Owner where OverDue.Owner = '" + Emp_Name + "'";
-                        SqlCommand DateCheck3 = new SqlCommand(query3, _connection);
-                        using (SqlDataReader oReader2 = DateCheck3.ExecuteReader())
-                        {
-                            string messageBody = "";
-                            messageBody = "<font>The following are the Outstanding Invoices: </font><br><br>";
-                            string htmlTableStart = "<table style=\"border-collapse:collapse; text-align:center;\" >";
-                            string htmlTableEnd = "</table>";
-                            string htmlHeaderRowStart = "<tr style =\"background-color:#6FA1D2; color:#ffffff;\">";
-                            string htmlHeaderRowEnd = "</tr>";
-                            string htmlTrStart = "<tr style =\"color:#555555;\">";
-                            string htmlTrEnd = "</tr>";
-                            string htmlTdStart = "<th style=\" border-color:#5c87b2; border-style:solid; border-width:thin; padding: 5px;\">";
-                            string htmlTdEnd = "</th>";
-
-                            messageBody += htmlTableStart;
-                            messageBody += htmlHeaderRowStart;
-                            messageBody += htmlTdStart + "Date " + htmlTdEnd;
-                            messageBody += htmlTdStart + "Ref. No. " + htmlTdEnd;
-                            messageBody += htmlTdStart + "Client Name " + htmlTdEnd;
-                            messageBody += htmlTdStart + "Pending Amt " + htmlTdEnd;
-                            messageBody += htmlTdStart + "Comments " + htmlTdEnd;
-                            messageBody += htmlTdStart + "Status " + htmlTdEnd;
-                            messageBody += htmlTdStart + "Due Date " + htmlTdEnd;
-
-                            messageBody += htmlHeaderRowEnd;
-
-                            while (oReader2.Read())
+                            while (oReader.Read())
                             {
-                                messageBody = messageBody + htmlTrStart;
-                                messageBody = messageBody + htmlTdStart + oReader2[0].ToString() + htmlTdEnd;
-                                messageBody = messageBody + htmlTdStart + oReader2[1].ToString() + htmlTdEnd;
-                                messageBody = messageBody + htmlTdStart + oReader2[2].ToString() + htmlTdEnd;
-                                messageBody = messageBody + htmlTdStart + oReader2[3].ToString() + htmlTdEnd;
-                                messageBody = messageBody + htmlTdStart + oReader2[4].ToString() + htmlTdEnd;
-                                messageBody = messageBody + htmlTdStart + oReader2[5].ToString() + htmlTdEnd;
-                                messageBody = messageBody + htmlTdStart + oReader2[6].ToString() + htmlTdEnd;
-                                emailID = oReader2[7].ToString();
-                                messageBody = messageBody + htmlTrEnd;
+                                EmpNameList.Add(oReader[0].ToString());
                             }
-                            messageBody = messageBody + htmlTableEnd;
-                            msgbody = messageBody;
+                            oReader.Close();
                         }
-                        string HostAdd = "smtp.gmail.com";
-                        string FromEmailid = "notifications@envirosafetysolutions.in";
-                        string password = "Enviro@987";
-                        string port = "587";
 
-                        MailMessage mail = new MailMessage();
-                        mail.To.Add(emailID);
-                        //mail.To.Add("prasannapatnaikrcert@gmail.com");
-                        mail.From = new MailAddress(FromEmailid);
-
-                        
-                        string query4 = "SELECT Email FROM CCList where Comp  = '" + spreadsheetId + "'";
-                        SqlCommand DateCheck4 = new SqlCommand(query4, _connection);
-                        SqlDataReader reader4 = DateCheck4.ExecuteReader();
-                        if (reader4.HasRows)
+                        foreach (string Emp_Name in EmpNameList)
                         {
-                            while (reader4.Read())
-                            { mail.CC.Add(reader4.GetString(0)); }
-                        }
+                            emp = Emp_Name;
+                            //string query3 = "SELECT Date,RefNo,ClientName,PendingAmt,Comments,Status,DueDate FROM OverDue where Owner = '" + Emp_Name + "'";
+                            string query3 = "SELECT OverDue.Date, OverDue.RefNo, OverDue.ClientName, OverDue.PendingAmt, OverDue.Comments, OverDue.Status, OverDue.DueDate, Email.Email FROM Email INNER JOIN OverDue ON Email.Name = OverDue.Owner where OverDue.Owner = '" + Emp_Name + "'";
+                            SqlCommand DateCheck3 = new SqlCommand(query3, _connection);
+                            using (SqlDataReader oReader2 = DateCheck3.ExecuteReader())
+                            {
+                                string messageBody = "";
+                                messageBody = "<font>The following are the Outstanding Invoices: </font><br><br>";
+                                string htmlTableStart = "<table style=\"border-collapse:collapse; text-align:center;\" >";
+                                string htmlTableEnd = "</table>";
+                                string htmlHeaderRowStart = "<tr style =\"background-color:#6FA1D2; color:#ffffff;\">";
+                                string htmlHeaderRowEnd = "</tr>";
+                                string htmlTrStart = "<tr style =\"color:#555555;\">";
+                                string htmlTrEnd = "</tr>";
+                                string htmlTdStart = "<th style=\" border-color:#5c87b2; border-style:solid; border-width:thin; padding: 5px;\">";
+                                string htmlTdEnd = "</th>";
 
-                        mail.Subject = "Outstanding Report of " + Emp_Name;
-                        mail.Body = msgbody;
-                        mail.IsBodyHtml = true;
+                                messageBody += htmlTableStart;
+                                messageBody += htmlHeaderRowStart;
+                                messageBody += htmlTdStart + "Date " + htmlTdEnd;
+                                messageBody += htmlTdStart + "Ref. No. " + htmlTdEnd;
+                                messageBody += htmlTdStart + "Client Name " + htmlTdEnd;
+                                messageBody += htmlTdStart + "Pending Amt " + htmlTdEnd;
+                                messageBody += htmlTdStart + "Comments " + htmlTdEnd;
+                                messageBody += htmlTdStart + "Status " + htmlTdEnd;
+                                messageBody += htmlTdStart + "Due Date " + htmlTdEnd;
 
-                        try
-                        {
-                            SmtpClient cnt = new SmtpClient();
-                            cnt.UseDefaultCredentials = false;
-                            cnt.Host = HostAdd;
-                            cnt.Port = Convert.ToInt32(port);
-                            cnt.Credentials = new NetworkCredential(FromEmailid, password);
-                            cnt.EnableSsl = true;
+                                messageBody += htmlHeaderRowEnd;
 
-                            //cnt.Send(mail);
-                            //cnt.Dispose();
-                            mail.CC.Clear();
-                            mail.To.Clear();
+                                while (oReader2.Read())
+                                {
+                                    messageBody = messageBody + htmlTrStart;
+                                    messageBody = messageBody + htmlTdStart + oReader2[0].ToString() + htmlTdEnd;
+                                    messageBody = messageBody + htmlTdStart + oReader2[1].ToString() + htmlTdEnd;
+                                    messageBody = messageBody + htmlTdStart + oReader2[2].ToString() + htmlTdEnd;
+                                    messageBody = messageBody + htmlTdStart + oReader2[3].ToString() + htmlTdEnd;
+                                    messageBody = messageBody + htmlTdStart + oReader2[4].ToString() + htmlTdEnd;
+                                    messageBody = messageBody + htmlTdStart + oReader2[5].ToString() + htmlTdEnd;
+                                    messageBody = messageBody + htmlTdStart + oReader2[6].ToString() + htmlTdEnd;
+                                    emailID = oReader2[7].ToString();
+                                    messageBody = messageBody + htmlTrEnd;
+                                }
+                                messageBody = messageBody + htmlTableEnd;
+                                msgbody = messageBody;
+                            }
+                            string HostAdd = "smtp.gmail.com";
+                            string FromEmailid = "notifications@envirosafetysolutions.in";
+                            string password = "Enviro@987";
+                            string port = "587";
+
+                            MailMessage mail = new MailMessage();
+                            mail.To.Add(emailID);
+                            //mail.To.Add("prasannapatnaikrcert@gmail.com");
+                            mail.From = new MailAddress(FromEmailid);
+
+
+                            string query4 = "SELECT Email FROM CCList where Comp  = '" + spreadsheetId + "'";
+                            SqlCommand DateCheck4 = new SqlCommand(query4, _connection);
+                            SqlDataReader reader4 = DateCheck4.ExecuteReader();
+                            if (reader4.HasRows)
+                            {
+                                while (reader4.Read())
+                                { mail.CC.Add(reader4.GetString(0)); }
+                            }
+
+                            mail.Subject = "Outstanding Report of " + Emp_Name;
+                            
+                            mail.Body = msgbody;
+                            mail.IsBodyHtml = true;
+
+                            try
+                            {
+                                SmtpClient cnt = new SmtpClient();
+                                cnt.UseDefaultCredentials = false;
+                                cnt.Host = HostAdd;
+                                cnt.Port = Convert.ToInt32(port);
+                                cnt.Credentials = new NetworkCredential(FromEmailid, password);
+                                cnt.EnableSsl = true;
+
+                                cnt.Send(mail);
+                                cnt.Dispose();
+                                mail.CC.Clear();
+                                mail.To.Clear();
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine(ex.Message);
+                                //Console.ReadKey();
+                            }
                         }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex.Message);
-                            Console.ReadKey();
-                        }
+                        //Console.ReadKey();
                     }
-                    //Console.ReadKey();
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                        //Console.ReadKey();
+                        string test = DateTime.Now + " Sheet No:" + sheetno + " Emp Name:" + emp + " " + ex.Message;
+                        //File.WriteAllText(@"C:\HWM\LogOut.txt", test);
+                        File.AppendAllText(@"C:\HWM\LogOut.txt", test + Environment.NewLine);
+                    }
+                    
                 }
             }
             else
